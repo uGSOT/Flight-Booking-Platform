@@ -1,0 +1,119 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.headerInner {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-bold);
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.logo {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  font-size: 0.9rem;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.navLink {
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+}
+.navLink:hover {
+  color: var(--color-primary);
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.phone {
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-secondary);
+}
+
+.primaryBtn {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-input);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+.primaryBtn:hover {
+  background: var(--color-primary-hover);
+  text-decoration: none;
+}
+
+.ghostBtn {
+  background: transparent;
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-primary);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-input);
+  font-size: var(--fs-body-sm);
+}
+.ghostBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.footer {
+  margin-top: auto;
+  background: var(--color-primary-active);
+  color: var(--color-text-on-primary);
+  padding-block: var(--space-8);
+}
+.footerBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-bold);
+  font-size: 1.25rem;
+}
+.footerTag {
+  margin-top: var(--space-2);
+  opacity: 0.85;
+  font-size: var(--fs-body-sm);
+  max-width: 320px;
+}
+.copyright {
+  margin-top: var(--space-6);
+  opacity: 0.7;
+  font-size: var(--fs-body-sm);
+}
