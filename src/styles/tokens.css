@@ -1,0 +1,73 @@
+/* AirMe design tokens — derived from /mockups and docs/FIGMA-DESIGN-REQUIREMENTS.md */
+:root {
+  /* Brand / primary (navy from mockups) */
+  --color-primary: #2b4c7e;
+  --color-primary-hover: #24406b;
+  --color-primary-active: #1d3557;
+  --color-secondary: #f28c28; /* warm accent (sunset/offer) */
+
+  /* Surfaces */
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef1f5;
+  --color-border: #e2e6ec;
+  --color-border-strong: #cbd2dc;
+
+  /* Text */
+  --color-text-primary: #1a2233;
+  --color-text-secondary: #5b6472;
+  --color-text-muted: #8a92a0;
+  --color-text-on-primary: #ffffff;
+
+  /* Status */
+  --color-success: #1a9e5f;
+  --color-success-bg: #e6f6ee;
+  --color-warning: #d98a00;
+  --color-warning-bg: #fdf3e2;
+  --color-error: #d64545;
+  --color-error-bg: #fdeaea;
+  --color-info: #2b6cb0;
+  --color-info-bg: #e8f1fb;
+
+  /* Typography */
+  --font-sans: "Inter", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fs-display: 2.75rem;
+  --fs-h1: 2rem;
+  --fs-h2: 1.5rem;
+  --fs-h3: 1.25rem;
+  --fs-body: 1rem;
+  --fs-body-sm: 0.875rem;
+  --fs-label: 0.8125rem;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Spacing scale (4-based) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius */
+  --radius-input: 8px;
+  --radius-card: 12px;
+  --radius-modal: 16px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px rgba(26, 34, 51, 0.08), 0 1px 2px rgba(26, 34, 51, 0.04);
+  --shadow-modal: 0 12px 32px rgba(26, 34, 51, 0.18);
+
+  /* Layout */
+  --max-content: 1200px;
+  --max-form: 960px;
+  --max-admin: 1400px;
+
+  --z-header: 100;
+  --z-modal: 1000;
+}
