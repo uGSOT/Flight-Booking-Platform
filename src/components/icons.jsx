@@ -121,6 +121,19 @@ export const MapPin = (p) => (
   </svg>
 );
 
+export const Edit = (p) => (
+  <svg {...base(p)}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+  </svg>
+);
+
+export const Plane = (p) => (
+  <svg {...base(p)}>
+    <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L11 19v-5.5z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 export const Instagram = (p) => (
   <svg {...base(p)}>
     <rect x="3" y="3" width="18" height="18" rx="5" />

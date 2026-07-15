@@ -1,28 +1,17 @@
 import { Routes, Route } from "react-router-dom";
 import SiteLayout from "./components/SiteLayout.jsx";
+import BookingShell from "./components/BookingShell.jsx";
 import Placeholder from "./components/Placeholder.jsx";
 import LandingPage from "./features/landing/LandingPage.jsx";
+import SearchResults from "./features/results/SearchResults.jsx";
 import { RequireAuth, RequireAdmin } from "./routes/guards.jsx";
 
 export default function App() {
   return (
     <Routes>
-      {/* Public site */}
+      {/* Marketing + authenticated dashboard site */}
       <Route element={<SiteLayout />}>
         <Route index element={<LandingPage />} />
-        <Route path="flights" element={<Placeholder title="Search Results" note="Filters, sort and flight result cards — M1." />} />
-
-        {/* Booking flow (auth required to complete) */}
-        <Route
-          path="booking/*"
-          element={
-            <RequireAuth>
-              <Placeholder title="Booking" note="4-step flow: Flight Selection → Review & Traveller → Add-ons → Payment — M1." />
-            </RequireAuth>
-          }
-        />
-
-        {/* Authenticated traveller */}
         <Route
           path="bookings"
           element={
@@ -44,6 +33,36 @@ export default function App() {
           element={
             <RequireAuth>
               <Placeholder title="Dashboard" note="Overview + reports — M3." />
+            </RequireAuth>
+          }
+        />
+      </Route>
+
+      {/* Booking flow shell (4-step stepper header) */}
+      <Route element={<BookingShell />}>
+        {/* Step 1 — Flight Selection (search is public; auth required to book) */}
+        <Route path="flights" element={<SearchResults />} />
+        <Route
+          path="booking/review"
+          element={
+            <RequireAuth>
+              <Placeholder title="Review & Traveller Details" note="Step 2 — M1." />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="booking/addons"
+          element={
+            <RequireAuth>
+              <Placeholder title="Add-ons" note="Step 3 — seat map + meals — M1." />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="booking/payment"
+          element={
+            <RequireAuth>
+              <Placeholder title="Payment" note="Step 4 — Razorpay — M1." />
             </RequireAuth>
           }
         />
