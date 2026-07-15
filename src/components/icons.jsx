@@ -121,6 +121,25 @@ export const MapPin = (p) => (
   </svg>
 );
 
+export const ArrowLeft = (p) => (
+  <svg {...base(p)}>
+    <path d="M19 12H5M12 19l-7-7 7-7" />
+  </svg>
+);
+
+export const Mail = (p) => (
+  <svg {...base(p)}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
+  </svg>
+);
+
+export const Phone = (p) => (
+  <svg {...base(p)}>
+    <path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 3 5a1 1 0 0 1 1-1z" />
+  </svg>
+);
+
 export const Edit = (p) => (
   <svg {...base(p)}>
     <path d="M12 20h9" />

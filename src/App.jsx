@@ -4,6 +4,7 @@ import BookingShell from "./components/BookingShell.jsx";
 import Placeholder from "./components/Placeholder.jsx";
 import LandingPage from "./features/landing/LandingPage.jsx";
 import SearchResults from "./features/results/SearchResults.jsx";
+import ReviewDetails from "./features/booking/ReviewDetails.jsx";
 import { RequireAuth, RequireAdmin } from "./routes/guards.jsx";
 
 export default function App() {
@@ -40,32 +41,13 @@ export default function App() {
 
       {/* Booking flow shell (4-step stepper header) */}
       <Route element={<BookingShell />}>
-        {/* Step 1 — Flight Selection (search is public; auth required to book) */}
+        {/* Step 1 — Flight Selection */}
         <Route path="flights" element={<SearchResults />} />
-        <Route
-          path="booking/review"
-          element={
-            <RequireAuth>
-              <Placeholder title="Review & Traveller Details" note="Step 2 — M1." />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="booking/addons"
-          element={
-            <RequireAuth>
-              <Placeholder title="Add-ons" note="Step 3 — seat map + meals — M1." />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="booking/payment"
-          element={
-            <RequireAuth>
-              <Placeholder title="Payment" note="Step 4 — Razorpay — M1." />
-            </RequireAuth>
-          }
-        />
+        {/* Step 2 — Review & Traveller Details */}
+        <Route path="booking/review" element={<ReviewDetails />} />
+        {/* Steps 3–4 (login gating to be added with the auth modal) */}
+        <Route path="booking/addons" element={<Placeholder title="Add-ons" note="Step 3 — seat map + meals — next." />} />
+        <Route path="booking/payment" element={<Placeholder title="Payment" note="Step 4 — Razorpay — next." />} />
       </Route>
 
       {/* Admin shell (role-gated) */}

@@ -137,8 +137,23 @@ export default function SearchResults() {
     setArrBuckets(new Set());
   }
 
-  function book(flight) {
-    update({ flight, fareTier: null });
+  function book(flight, returnFlight = null) {
+    update({
+      flight,
+      returnFlight,
+      fareTier: null,
+      trip: {
+        from: from?.code,
+        to: to?.code,
+        depart,
+        ret,
+        tripType,
+        adults: Number(params.get("adults") || 1),
+        children: Number(params.get("children") || 0),
+        infants: Number(params.get("infants") || 0),
+        cabin,
+      },
+    });
     navigate("/booking/review");
   }
 
@@ -284,7 +299,7 @@ export default function SearchResults() {
           {tripType === "round" && (selectedOut && selectedIn) && (
             <div className={styles.roundBar}>
               <span>Onward + Return selected</span>
-              <button type="button" onClick={() => book(outboundResults.find((f) => f.id === selectedOut))}>Continue</button>
+              <button type="button" onClick={() => book(outboundResults.find((f) => f.id === selectedOut), inboundResults.find((f) => f.id === selectedIn))}>Continue</button>
             </div>
           )}
         </section>

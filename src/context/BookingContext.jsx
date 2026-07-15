@@ -4,6 +4,7 @@ const BookingContext = createContext(null);
 const DRAFT_KEY = "airme.bookingDraft";
 
 const emptyDraft = {
+  trip: null, // { from, to, depart, ret, tripType, adults, children, infants, cabin }
   flight: null, // selected outbound flight
   returnFlight: null,
   fareTier: null, // 'saver' | 'regular' | 'flexi'

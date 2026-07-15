@@ -25,6 +25,19 @@ export function formatDate(value) {
   return Number.isNaN(d.getTime()) ? "—" : dateFmt.format(d);
 }
 
+const dayDateFmt = new Intl.DateTimeFormat("en-IN", {
+  weekday: "short",
+  day: "2-digit",
+  month: "short",
+});
+
+/** Format a date as "Thu, 02 Jul". */
+export function formatDayDate(value) {
+  if (!value) return "—";
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? "—" : dayDateFmt.format(d);
+}
+
 /** Format minutes as "2h 20m". */
 export function formatDuration(minutes) {
   if (minutes == null) return "—";
