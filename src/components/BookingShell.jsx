@@ -1,7 +1,8 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthModal } from "../context/AuthModalContext.jsx";
 import BookingStepper from "./BookingStepper.jsx";
-import { User, Chevron } from "./icons.jsx";
+import AccountMenu from "./AccountMenu.jsx";
 import logo from "../assets/images/logo.png";
 import styles from "./BookingShell.module.css";
 
@@ -10,12 +11,14 @@ function stepFor(pathname) {
   if (pathname.startsWith("/booking/review")) return 2;
   if (pathname.startsWith("/booking/addons")) return 3;
   if (pathname.startsWith("/booking/payment")) return 4;
+  if (pathname.startsWith("/booking/confirmation")) return 5; // all steps complete
   return 1; // /flights and default
 }
 
 export default function BookingShell() {
   const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
+  const { openLogin } = useAuthModal();
 
   return (
     <div className={styles.shell}>
@@ -29,13 +32,9 @@ export default function BookingShell() {
           <BookingStepper current={stepFor(pathname)} />
 
           {isAuthenticated ? (
-            <button type="button" className={styles.account}>
-              <span className={styles.avatar}><User size={18} /></span>
-              My Account
-              <Chevron size={16} />
-            </button>
+            <AccountMenu />
           ) : (
-            <Link to="/?login=1" className={styles.loginBtn}>Log In</Link>
+            <button type="button" className={styles.loginBtn} onClick={() => openLogin()}>Log In</button>
           )}
         </div>
       </header>

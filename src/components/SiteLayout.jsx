@@ -1,5 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useAuthModal } from "../context/AuthModalContext.jsx";
+import AccountMenu from "./AccountMenu.jsx";
 import { Ticket, Headset, Instagram, LinkedIn, XSocial } from "./icons.jsx";
 import logo from "../assets/images/logo.png";
 import styles from "./SiteLayout.module.css";
@@ -11,7 +13,8 @@ const FOOTER_COLS = [
 ];
 
 export default function SiteLayout() {
-  const { isAuthenticated, user, signOut } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { openLogin } = useAuthModal();
 
   return (
     <div className={styles.shell}>
@@ -30,14 +33,9 @@ export default function SiteLayout() {
               <Headset size={18} /> Support
             </a>
             {isAuthenticated ? (
-              <div className={styles.account}>
-                <span className={styles.phone}>{user?.phone}</span>
-                <button type="button" className={styles.ghostBtn} onClick={signOut}>
-                  Log out
-                </button>
-              </div>
+              <AccountMenu />
             ) : (
-              <Link to="/?login=1" className={styles.primaryBtn}>Log In</Link>
+              <button type="button" className={styles.primaryBtn} onClick={() => openLogin()}>Log In</button>
             )}
           </nav>
         </div>

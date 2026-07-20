@@ -3,6 +3,10 @@ import { getCurrentUser, signOut as authSignOut } from "../lib/auth.js";
 
 const AuthContext = createContext(null);
 
+// Demo admin numbers (until Supabase profiles.role is wired). Log in with one
+// of these to access /admin.
+const ADMIN_PHONES = new Set(["+919000000001", "+910000000000"]);
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -26,7 +30,7 @@ export function AuthProvider({ children }) {
       profile,
       loading,
       isAuthenticated: Boolean(user),
-      isAdmin: profile?.role === "admin",
+      isAdmin: profile?.role === "admin" || ADMIN_PHONES.has(user?.phone),
       setUser,
       setProfile,
       signOut,
