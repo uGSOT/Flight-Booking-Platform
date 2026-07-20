@@ -4,8 +4,11 @@ import { resolveAirport } from "../../data/airports.js";
 import { generateFlights, timeBucket } from "../../lib/mockFlights.js";
 import { formatINR } from "../../lib/format.js";
 import { useBooking } from "../../context/BookingContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuthModal } from "../../context/AuthModalContext.jsx";
 import { Swap, Calendar, User, Edit } from "../../components/icons.jsx";
 import FlightCard from "./FlightCard.jsx";
+import FareModal from "./FareModal.jsx";
 import styles from "./SearchResults.module.css";
 
 const TIME_BUCKETS = [
@@ -44,6 +47,9 @@ export default function SearchResults() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { update } = useBooking();
+  const { isAuthenticated } = useAuth();
+  const { openLogin } = useAuthModal();
+  const [fareFor, setFareFor] = useState(null); // flight pending fare selection
 
   const from = resolveAirport(params.get("from"));
   const to = resolveAirport(params.get("to"));
@@ -137,24 +143,29 @@ export default function SearchResults() {
     setArrBuckets(new Set());
   }
 
-  function book(flight, returnFlight = null) {
-    update({
-      flight,
-      returnFlight,
-      fareTier: null,
-      trip: {
-        from: from?.code,
-        to: to?.code,
-        depart,
-        ret,
-        tripType,
-        adults: Number(params.get("adults") || 1),
-        children: Number(params.get("children") || 0),
-        infants: Number(params.get("infants") || 0),
-        cabin,
-      },
-    });
-    navigate("/booking/review");
+  function proceed(flight, fareTier, returnFlight = null) {
+    const go = () => {
+      update({
+        flight,
+        returnFlight,
+        fareTier,
+        trip: {
+          from: from?.code,
+          to: to?.code,
+          depart,
+          ret,
+          tripType,
+          adults: Number(params.get("adults") || 1),
+          children: Number(params.get("children") || 0),
+          infants: Number(params.get("infants") || 0),
+          cabin,
+        },
+      });
+      navigate("/booking/review");
+    };
+    setFareFor(null);
+    if (isAuthenticated) go();
+    else openLogin(go);
   }
 
   return (
@@ -291,7 +302,7 @@ export default function SearchResults() {
               <EmptyState onReset={resetAll} />
             ) : (
               outboundResults.map((f) => (
-                <FlightCard key={f.id} flight={f} from={from} to={to} onBook={() => book(f)} />
+                <FlightCard key={f.id} flight={f} from={from} to={to} onBook={() => setFareFor(f)} />
               ))
             )
           )}
@@ -299,11 +310,20 @@ export default function SearchResults() {
           {tripType === "round" && (selectedOut && selectedIn) && (
             <div className={styles.roundBar}>
               <span>Onward + Return selected</span>
-              <button type="button" onClick={() => book(outboundResults.find((f) => f.id === selectedOut), inboundResults.find((f) => f.id === selectedIn))}>Continue</button>
+              <button type="button" onClick={() => proceed(outboundResults.find((f) => f.id === selectedOut), null, inboundResults.find((f) => f.id === selectedIn))}>Continue</button>
             </div>
           )}
         </section>
       </div>
+
+      <FareModal
+        open={Boolean(fareFor)}
+        onClose={() => setFareFor(null)}
+        flight={fareFor}
+        from={from}
+        to={to}
+        onContinue={(tier) => proceed(fareFor, tier)}
+      />
     </div>
   );
 }
