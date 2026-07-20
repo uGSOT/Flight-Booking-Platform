@@ -121,6 +121,18 @@ export const MapPin = (p) => (
   </svg>
 );
 
+export const Check = (p) => (
+  <svg {...base(p)}>
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);
+
+export const Minus = (p) => (
+  <svg {...base(p)}>
+    <path d="M5 12h14" />
+  </svg>
+);
+
 export const ArrowLeft = (p) => (
   <svg {...base(p)}>
     <path d="M19 12H5M12 19l-7-7 7-7" />

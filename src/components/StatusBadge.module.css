@@ -1,0 +1,11 @@
+.badge {
+  display: inline-block;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semibold);
+  text-transform: capitalize;
+}
+.confirmed { background: var(--color-success-bg); color: var(--color-success); }
+.pending { background: var(--color-warning-bg); color: var(--color-warning); }
+.cancelled { background: var(--color-error-bg); color: var(--color-error); }

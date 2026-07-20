@@ -1,0 +1,21 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(26, 34, 51, 0.55);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-height: 92vh;
+  overflow: auto;
+}
+.sm { max-width: 460px; }
+.md { max-width: 640px; }
+.lg { max-width: 920px; }
+.xl { max-width: 1040px; }
