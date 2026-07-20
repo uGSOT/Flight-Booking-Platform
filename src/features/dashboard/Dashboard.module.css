@@ -1,0 +1,83 @@
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-8);
+  padding-block: var(--space-8);
+  align-items: start;
+}
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  position: sticky;
+  top: 84px;
+}
+.nav, .navActive {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-input);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+}
+.nav:hover { background: var(--color-surface-muted); text-decoration: none; }
+.navActive { background: var(--color-primary); color: #fff; }
+.navActive:hover { text-decoration: none; }
+.content { min-width: 0; }
+
+.pageHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
+.pageHead h1 { font-size: var(--fs-h1); font-weight: var(--fw-bold); }
+.pageTitle { font-size: var(--fs-h1); font-weight: var(--fw-bold); margin-bottom: var(--space-6); }
+.primaryBtn { background: var(--color-primary); color: #fff; border: none; border-radius: var(--radius-input); padding: var(--space-2) var(--space-6); font-weight: var(--fw-semibold); }
+.primaryBtn:hover { background: var(--color-primary-hover); }
+
+.statGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
+.statRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
+.stat {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+.statLabel { display: block; color: var(--color-text-secondary); font-size: var(--fs-body-sm); margin-bottom: var(--space-2); }
+.stat strong { font-size: 1.6rem; font-weight: var(--fw-bold); }
+
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.chartGrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-card);
+}
+.panel h2 { font-size: var(--fs-h3); margin-bottom: var(--space-4); }
+.muted { color: var(--color-text-secondary); }
+
+.upcoming { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface-muted); border-radius: var(--radius-card); padding: var(--space-4); }
+.upRoute strong { display: block; font-size: 1.1rem; }
+.upRoute span { color: var(--color-text-secondary); font-size: var(--fs-body-sm); }
+.upMeta { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+
+.recentList { list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }
+.recentList li { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-input); font-size: var(--fs-body-sm); }
+.mono { font-family: ui-monospace, monospace; font-weight: var(--fw-semibold); }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); font-size: var(--fs-label); color: var(--color-text-secondary); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.emptyReport, .empty { text-align: center; padding: var(--space-16); background: var(--color-surface); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-card); }
+.emptyReport strong { display: block; font-size: 1.1rem; margin-bottom: var(--space-2); }
+.emptyReport p { color: var(--color-text-secondary); }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { flex-direction: row; overflow-x: auto; position: static; }
+  .statGrid { grid-template-columns: 1fr 1fr; }
+  .statRow, .twoCol, .chartGrid { grid-template-columns: 1fr; }
+}
