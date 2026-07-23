@@ -30,6 +30,7 @@ create table if not exists public.bookings (
   discount_amount   integer not null default 0,
   total_amount      integer not null default 0,
   promo_code        text,
+  details           jsonb not null default '{}'::jsonb,  -- client-side flight/trip snapshot
   created_at        timestamptz not null default now()
 );
 

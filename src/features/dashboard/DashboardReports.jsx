@@ -1,6 +1,7 @@
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { listBookings } from "../../lib/bookingsStore.js";
+import { listBookings } from "../../lib/db.js";
 import { userStats, monthlySpend, spendByAirline, tripsPerMonth, topRoutes } from "../../lib/analytics.js";
 import { formatINR } from "../../lib/format.js";
 import {
@@ -13,7 +14,7 @@ const DONUT = ["#2b4c7e", "#f28c28", "#1a9e5f", "#6b8cbf", "#d98a00", "#9b7fc0"]
 
 export default function DashboardReports() {
   const { user } = useAuth();
-  const bookings = useMemo(() => listBookings({ phone: user?.phone }), [user?.phone]);
+  const { data: bookings = [] } = useQuery({ queryKey: ["bookings", user?.phone], queryFn: () => listBookings(user?.phone) });
   const stats = useMemo(() => userStats(bookings), [bookings]);
   const spend = useMemo(() => monthlySpend(bookings), [bookings]);
   const byAirline = useMemo(() => spendByAirline(bookings), [bookings]);

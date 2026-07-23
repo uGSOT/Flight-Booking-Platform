@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { listBookings } from "../../lib/bookingsStore.js";
+import { listBookings } from "../../lib/db.js";
 import { userStats } from "../../lib/analytics.js";
 import { formatINR, formatDate } from "../../lib/format.js";
 import StatusBadge from "../../components/StatusBadge.jsx";
@@ -10,7 +11,7 @@ import styles from "./Dashboard.module.css";
 export default function DashboardOverview() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const bookings = useMemo(() => listBookings({ phone: user?.phone }), [user?.phone]);
+  const { data: bookings = [] } = useQuery({ queryKey: ["bookings", user?.phone], queryFn: () => listBookings(user?.phone) });
   const stats = useMemo(() => userStats(bookings), [bookings]);
 
   const today = new Date("2026-07-20");

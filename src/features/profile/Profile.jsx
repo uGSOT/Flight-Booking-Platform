@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { getProfile, saveProfile } from "../../lib/profileStore.js";
+import { getMyProfile, saveMyProfile } from "../../lib/db.js";
 import { User, Calendar, Mail, Phone, Chevron } from "../../components/icons.jsx";
 import profileImg from "../../assets/images/auth-side.png";
 import styles from "./Profile.module.css";
@@ -9,21 +9,34 @@ const empty = { firstName: "", lastName: "", dob: "", gender: "", email: "", pho
 
 export default function Profile() {
   const { user } = useAuth();
-  const [form, setForm] = useState(() => ({ ...empty, phone: user?.phone || "", ...(getProfile(user?.phone) || {}) }));
+  const [form, setForm] = useState({ ...empty, phone: user?.phone || "" });
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const p = await getMyProfile(user?.phone);
+      if (active && p) setForm((f) => ({ ...f, ...p, phone: p.phone || user?.phone || "" }));
+    })();
+    return () => { active = false; };
+  }, [user?.phone]);
 
   function set(k, v) {
     setForm((f) => ({ ...f, [k]: v }));
     setSaved(false);
   }
 
-  function save() {
+  async function save() {
     setError("");
     if (!form.gender) { setError("Please select a gender."); return; }
     if (!form.phone.trim()) { setError("Phone number is required."); return; }
-    saveProfile(user?.phone || form.phone, form);
-    setSaved(true);
+    try {
+      await saveMyProfile(form);
+      setSaved(true);
+    } catch (err) {
+      setError(err.message || "Could not save profile.");
+    }
   }
 
   return (

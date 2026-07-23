@@ -1,29 +1,25 @@
-// AirMe auth service — Phone + MOCK OTP (PRD D1 / Architecture §4.1).
+// AirMe auth service — Phone + MOCK OTP with a REAL Supabase session.
 //
-// v1 has NO SMS provider. `requestOtp` generates a random 6-digit code, holds it
-// in memory with a short expiry, and surfaces it via alert() so the user can
-// copy-paste it. `verifyOtp` checks the code, then establishes a session.
+// v1 has NO SMS provider. `requestOtp` generates a random 6-digit code and shows
+// it via alert() (dev convenience). `verifyOtp` checks the code, then signs the
+// user into Supabase using a deterministic phone→email shim so a real session +
+// JWT exists and RLS works (Architecture §4.1, option B).
 //
-// This whole module is the swap point: to go live, replace the bodies of
-// requestOtp/verifyOtp with supabase.auth.signInWithOtp / verifyOtp and configure
-// an SMS provider. The UI never changes.
-//
-// ⚠️ DEMO ONLY — the alert() mock must be removed before any real launch.
+// ⚠️ DEMO ONLY. Replace requestOtp/verifyOtp with supabase.auth.signInWithOtp /
+// verifyOtp + an SMS provider to go live. Requires "Confirm email" to be OFF in
+// Supabase Auth settings for the shim signup to return a session.
 
 import { supabase, isSupabaseConfigured } from "./supabase.js";
 
-const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_LENGTH = 6;
-const STORAGE_KEY = "airme.mockSession";
+const STORAGE_KEY = "airme.mockSession"; // fallback session when Supabase is off
 
-// In-memory pending OTP challenge: { phone, code, expiresAt }
-let pending = null;
+let pending = null; // { phone, code, expiresAt }
 
 function generateCode() {
   let code = "";
-  for (let i = 0; i < OTP_LENGTH; i++) {
-    code += Math.floor(Math.random() * 10).toString();
-  }
+  for (let i = 0; i < OTP_LENGTH; i++) code += Math.floor(Math.random() * 10);
   return code;
 }
 
@@ -32,53 +28,66 @@ function normalizePhone(dialCode, phone) {
   return `${dialCode}${digits}`;
 }
 
-/**
- * Step 1 — generate + "send" an OTP. Returns the normalized phone identity.
- * In the mock, the code is shown via alert(); in production this is a no-op SMS send.
- */
+// Deterministic Supabase credentials derived from the phone identity.
+function shimCredentials(identity) {
+  const digits = identity.replace(/\D/g, "");
+  return { email: `u${digits}@airme.app`, password: `airme:${digits}:v1` };
+}
+
+/** Step 1 — generate + "send" an OTP (mock: shown via alert). */
 export async function requestOtp({ dialCode = "+91", phone }) {
   const identity = normalizePhone(dialCode, phone);
   const code = generateCode();
   pending = { phone: identity, code, expiresAt: Date.now() + OTP_TTL_MS };
-
-  // DEMO: surface the code so the user can copy-paste it.
-  if (typeof window !== "undefined") {
-    window.alert(`Your AirMe OTP is ${code}`);
-  }
+  if (typeof window !== "undefined") window.alert(`Your AirMe OTP is ${code}`);
   return { phone: identity, ttlMs: OTP_TTL_MS };
 }
 
-/**
- * Step 2 — verify the code and establish a session.
- * Returns { user } on success; throws Error on invalid/expired code.
- */
+/** Step 2 — verify the code and establish a session. Returns { user }. */
 export async function verifyOtp({ phone, dialCode = "+91", code }) {
   const identity = phone?.startsWith("+") ? phone : normalizePhone(dialCode, phone);
 
-  if (!pending || pending.phone !== identity) {
-    throw new Error("No OTP was requested for this number. Please resend.");
-  }
-  if (Date.now() > pending.expiresAt) {
-    pending = null;
-    throw new Error("OTP has expired. Please resend.");
-  }
-  if (String(code) !== pending.code) {
-    throw new Error("Incorrect OTP. Please try again.");
-  }
+  if (!pending || pending.phone !== identity) throw new Error("No OTP was requested for this number. Please resend.");
+  if (Date.now() > pending.expiresAt) { pending = null; throw new Error("OTP has expired. Please resend."); }
+  if (String(code) !== pending.code) throw new Error("Incorrect OTP. Please try again.");
   pending = null;
 
-  // TODO(real-auth): call the `sign-in-with-phone` Edge Function (Architecture §4.1
-  // option A) to mint a real Supabase session. Until then, use a local mock session.
   if (isSupabaseConfigured && supabase) {
-    // Placeholder for the real flow; kept as mock for v1 skeleton.
+    const { email, password } = shimCredentials(identity);
+    // Existing user → sign in; new user → sign up (then sign in if needed).
+    let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      const signUp = await supabase.auth.signUp({ email, password, options: { data: { phone: identity } } });
+      if (signUp.error) throw new Error(signUp.error.message);
+      data = signUp.data;
+      if (!data.session) {
+        // No session after signup usually means "Confirm email" is enabled.
+        const retry = await supabase.auth.signInWithPassword({ email, password });
+        if (retry.error || !retry.data.session) {
+          throw new Error("Could not start a session. In Supabase → Authentication → Providers → Email, turn OFF \"Confirm email\", then try again.");
+        }
+        data = retry.data;
+      }
+    }
+    // Ensure the profile carries the phone (trigger can't read it from an email signup).
+    const uid = data.user?.id;
+    if (uid) await supabase.from("profiles").update({ phone: identity }).eq("id", uid);
+    return { user: { id: uid, phone: identity } };
   }
+
+  // Fallback (Supabase not configured): local mock session.
   const user = { id: `mock-${identity}`, phone: identity };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
   return { user };
 }
 
-/** Return the current session's user, or null. */
-export function getCurrentUser() {
+/** Current session user, or null. Async because Supabase is the source of truth. */
+export async function getSessionUser() {
+  if (isSupabaseConfigured && supabase) {
+    const { data } = await supabase.auth.getSession();
+    const s = data.session;
+    return s ? { id: s.user.id, phone: s.user.user_metadata?.phone || null } : null;
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -90,7 +99,5 @@ export function getCurrentUser() {
 export async function signOut() {
   pending = null;
   localStorage.removeItem(STORAGE_KEY);
-  if (isSupabaseConfigured && supabase) {
-    await supabase.auth.signOut();
-  }
+  if (isSupabaseConfigured && supabase) await supabase.auth.signOut();
 }

@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { listBookings, updateBookingStatus } from "../../lib/bookingsStore.js";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { listBookings, updateBookingStatus } from "../../lib/db.js";
 import { formatINR, formatDate } from "../../lib/format.js";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import styles from "./Admin.module.css";
@@ -7,9 +8,8 @@ import styles from "./Admin.module.css";
 const STATUSES = ["all", "confirmed", "pending", "cancelled"];
 
 export default function AdminBookings() {
-  const [version, setVersion] = useState(0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const all = useMemo(() => listBookings(), [version]);
+  const queryClient = useQueryClient();
+  const { data: all = [] } = useQuery({ queryKey: ["bookings"], queryFn: () => listBookings() });
   const [status, setStatus] = useState("all");
   const [q, setQ] = useState("");
 
@@ -22,9 +22,9 @@ export default function AdminBookings() {
     return true;
   });
 
-  function change(ref, next) {
-    updateBookingStatus(ref, next);
-    setVersion((v) => v + 1);
+  async function change(ref, next) {
+    await updateBookingStatus(ref, next);
+    queryClient.invalidateQueries({ queryKey: ["bookings"] });
   }
 
   return (

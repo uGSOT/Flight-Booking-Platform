@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
-import { getCurrentUser, signOut as authSignOut } from "../lib/auth.js";
+import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
+import { getSessionUser, signOut as authSignOut } from "../lib/auth.js";
 
 const AuthContext = createContext(null);
 
-// Demo admin numbers (until Supabase profiles.role is wired). Log in with one
-// of these to access /admin.
+// Demo admin numbers (until an admin sets profiles.role = 'admin' in the DB).
 const ADMIN_PHONES = new Set(["+919000000001", "+910000000000"]);
 
 export function AuthProvider({ children }) {
@@ -12,11 +12,35 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Bootstrap from the current (mock) session.
-    setUser(getCurrentUser());
-    setLoading(false);
+  const loadProfile = useCallback(async (uid) => {
+    if (!uid || !isSupabaseConfigured || !supabase) return;
+    const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if (data) setProfile(data);
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const u = await getSessionUser();
+      if (!active) return;
+      setUser(u);
+      if (u?.id) await loadProfile(u.id);
+      setLoading(false);
+    })();
+
+    // React to Supabase auth changes (login/logout/refresh).
+    let sub;
+    if (isSupabaseConfigured && supabase) {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        const u = session ? { id: session.user.id, phone: session.user.user_metadata?.phone || null } : null;
+        setUser(u);
+        setProfile(null);
+        if (u?.id) loadProfile(u.id);
+      });
+      sub = data.subscription;
+    }
+    return () => { active = false; sub?.unsubscribe?.(); };
+  }, [loadProfile]);
 
   const signOut = useCallback(async () => {
     await authSignOut();
@@ -33,9 +57,10 @@ export function AuthProvider({ children }) {
       isAdmin: profile?.role === "admin" || ADMIN_PHONES.has(user?.phone),
       setUser,
       setProfile,
+      refreshProfile: () => user?.id && loadProfile(user.id),
       signOut,
     }),
-    [user, profile, loading, signOut]
+    [user, profile, loading, signOut, loadProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

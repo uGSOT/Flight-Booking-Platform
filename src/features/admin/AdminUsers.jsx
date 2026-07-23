@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { listBookings } from "../../lib/bookingsStore.js";
+import { useQuery } from "@tanstack/react-query";
+import { listBookings } from "../../lib/db.js";
 import { usersActivity } from "../../lib/analytics.js";
 import { formatINR } from "../../lib/format.js";
 import styles from "./Admin.module.css";
 
 export default function AdminUsers() {
-  const users = useMemo(() => usersActivity(listBookings()), []);
+  const { data: bookings = [] } = useQuery({ queryKey: ["bookings"], queryFn: () => listBookings() });
+  const users = useMemo(() => usersActivity(bookings), [bookings]);
   const [q, setQ] = useState("");
   const rows = users.filter((u) => !q || `${u.name} ${u.phone}`.toLowerCase().includes(q.toLowerCase()));
 

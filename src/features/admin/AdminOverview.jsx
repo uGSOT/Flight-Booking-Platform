@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { listBookings } from "../../lib/bookingsStore.js";
+import { useQuery } from "@tanstack/react-query";
+import { listBookings } from "../../lib/db.js";
 import { adminStats, monthlySpend, bookingsByStatus } from "../../lib/analytics.js";
 import { formatINR, formatDate } from "../../lib/format.js";
 import StatusBadge from "../../components/StatusBadge.jsx";
@@ -7,7 +8,7 @@ import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Cart
 import styles from "./Admin.module.css";
 
 export default function AdminOverview() {
-  const all = useMemo(() => listBookings(), []);
+  const { data: all = [] } = useQuery({ queryKey: ["bookings"], queryFn: () => listBookings() });
   const stats = useMemo(() => adminStats(all), [all]);
   const revenue = useMemo(() => monthlySpend(all), [all]);
   const byStatus = useMemo(() => bookingsByStatus(all), [all]);

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { formatINR } from "../../lib/format.js";
-import { nextRef, saveBooking } from "../../lib/bookingsStore.js";
+import { saveBooking } from "../../lib/db.js";
 import { PAYMENTS_MOCK } from "../../lib/razorpay.js";
 import { ArrowLeft } from "../../components/icons.jsx";
 import TripSummary from "./TripSummary.jsx";
@@ -44,27 +44,30 @@ export default function Payment() {
     // Demo: simulate gateway capture. Real flow verifies via Razorpay webhook
     // server-side before confirming (Architecture §6). PAYMENTS_MOCK short-circuits.
     const delay = PAYMENTS_MOCK ? 400 : 1600;
-    setTimeout(() => {
-      const ref = nextRef();
-      saveBooking({
-        ref,
-        userPhone: user?.phone || "guest",
-        flight: draft.flight,
-        returnFlight: draft.returnFlight,
-        trip: draft.trip,
-        fareTier: draft.fareTier,
-        passengers: draft.passengers,
-        contact: draft.contact,
-        seats: draft.seats,
-        meals: draft.meals,
-        amount: total,
-        promoCode: draft.promoCode,
-        discountAmount: draft.discountAmount,
-        status: "confirmed",
-        createdAt: new Date().toISOString(),
-      });
-      reset();
-      navigate(`/booking/confirmation/${ref}`);
+    setTimeout(async () => {
+      try {
+        const ref = await saveBooking({
+          userPhone: user?.phone || "guest",
+          flight: draft.flight,
+          returnFlight: draft.returnFlight,
+          trip: draft.trip,
+          fareTier: draft.fareTier,
+          passengers: draft.passengers,
+          contact: draft.contact,
+          seats: draft.seats,
+          meals: draft.meals,
+          amount: total,
+          promoCode: draft.promoCode,
+          discountAmount: draft.discountAmount,
+          status: "confirmed",
+          createdAt: new Date().toISOString(),
+        });
+        reset();
+        navigate(`/booking/confirmation/${ref}`);
+      } catch (err) {
+        setProcessing(false);
+        setError(err.message || "Payment could not be completed. Please try again.");
+      }
     }, delay);
   }
 

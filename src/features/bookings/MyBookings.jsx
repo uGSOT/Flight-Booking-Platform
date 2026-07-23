@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { listBookings, updateBookingStatus } from "../../lib/bookingsStore.js";
+import { listBookings, updateBookingStatus } from "../../lib/db.js";
 import { AIRPORTS } from "../../data/airports.js";
 import { minutesToTime } from "../../lib/mockFlights.js";
 import { formatINR, formatDate, formatDayDate, formatDuration } from "../../lib/format.js";
@@ -15,10 +16,8 @@ const STATUSES = ["all", "confirmed", "pending", "cancelled"];
 export default function MyBookings() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [version, setVersion] = useState(0); // bump to re-read after cancel
-  // `version` forces a re-read of the store after a cancel.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const all = useMemo(() => listBookings({ phone: user?.phone }), [user?.phone, version]);
+  const queryClient = useQueryClient();
+  const { data: all = [] } = useQuery({ queryKey: ["bookings", user?.phone], queryFn: () => listBookings(user?.phone) });
   const [status, setStatus] = useState("all");
   const [q, setQ] = useState("");
   const [openRef, setOpenRef] = useState(null);
@@ -34,9 +33,9 @@ export default function MyBookings() {
 
   const active = openRef ? all.find((b) => b.ref === openRef) : null;
 
-  function cancel(ref) {
-    updateBookingStatus(ref, "cancelled");
-    setVersion((v) => v + 1);
+  async function cancel(ref) {
+    await updateBookingStatus(ref, "cancelled");
+    queryClient.invalidateQueries({ queryKey: ["bookings"] });
     setOpenRef(null);
   }
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { listBookings } from "../../lib/bookingsStore.js";
+import { useQuery } from "@tanstack/react-query";
+import { listBookings } from "../../lib/db.js";
 import { revenueByAirline, bookingsByStatus, usersActivity, topRoutes, monthlySpend } from "../../lib/analytics.js";
 import { formatINR } from "../../lib/format.js";
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
@@ -9,7 +10,7 @@ const DONUT = ["#1a9e5f", "#d98a00", "#d64545"];
 const TABS = ["Revenue", "Bookings", "Users", "Routes"];
 
 export default function AdminReports() {
-  const all = useMemo(() => listBookings(), []);
+  const { data: all = [] } = useQuery({ queryKey: ["bookings"], queryFn: () => listBookings() });
   const [tab, setTab] = useState("Revenue");
 
   const revByAirline = useMemo(() => revenueByAirline(all), [all]);

@@ -7,10 +7,12 @@ import { AuthModalProvider } from "./context/AuthModalContext.jsx";
 import { BookingProvider } from "./context/BookingContext.jsx";
 import App from "./App.jsx";
 import { seedDemoData } from "./lib/seedDemo.js";
+import { isSupabaseConfigured } from "./lib/supabase.js";
 import "./styles/tokens.css";
 import "./styles/globals.css";
 
-seedDemoData();
+// Demo seed only backs local-only mode; with Supabase, data lives in the DB.
+if (!isSupabaseConfigured) seedDemoData();
 
 const queryClient = new QueryClient({
   defaultOptions: {

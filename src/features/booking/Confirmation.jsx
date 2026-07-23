@@ -1,6 +1,6 @@
-import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getBooking } from "../../lib/bookingsStore.js";
+import { useQuery } from "@tanstack/react-query";
+import { getBooking } from "../../lib/db.js";
 import { AIRPORTS } from "../../data/airports.js";
 import { minutesToTime } from "../../lib/mockFlights.js";
 import { formatINR, formatDayDate, formatDuration } from "../../lib/format.js";
@@ -11,8 +11,9 @@ import styles from "./Confirmation.module.css";
 export default function Confirmation() {
   const { ref } = useParams();
   const navigate = useNavigate();
-  const booking = useMemo(() => getBooking(ref), [ref]);
+  const { data: booking, isLoading } = useQuery({ queryKey: ["booking", ref], queryFn: () => getBooking(ref) });
 
+  if (isLoading) return null;
   if (!booking) return <EmptyBooking />;
 
   const { flight, trip, passengers = [], seats = [], meals = [] } = booking;
