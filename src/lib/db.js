@@ -4,8 +4,53 @@
 import { supabase, isSupabaseConfigured } from "./supabase.js";
 import * as localBookings from "./bookingsStore.js";
 import * as localProfiles from "./profileStore.js";
+import { generateFlights } from "./mockFlights.js";
 
 export const useSupabase = isSupabaseConfigured && Boolean(supabase);
+
+// ── Flight search ─────────────────────────────────────────────────────────
+function timeToMin(t) {
+  if (!t) return 0;
+  const [h, m] = String(t).split(":");
+  return Number(h) * 60 + Number(m);
+}
+
+function rowToFlight(row) {
+  const airline = row.airline || {};
+  const prices = (row.fares || []).map((f) => f.base_price).filter((n) => n != null);
+  const price = prices.length ? Math.min(...prices) : 5000;
+  const dep = timeToMin(row.depart_time);
+  // Deterministic promo: ~70% of flights show the GIRUSH offer.
+  const promo = (dep + price) % 10 < 7 ? "₹380 OFF using GIRUSH code" : null;
+  return {
+    id: row.id,
+    airlineCode: airline.code,
+    airlineName: airline.name,
+    airlineColor: airline.color,
+    flightNo: row.flight_no,
+    depMin: dep,
+    arrMin: dep + row.duration_min,
+    durationMin: row.duration_min,
+    stops: row.stops,
+    price,
+    refundable: row.refundable,
+    promo,
+  };
+}
+
+/** Search flights for a route. Falls back to generated flights when the DB has
+ *  no inventory for the route (keeps the demo populated for any route). */
+export async function searchFlights({ from, to, depart }) {
+  if (!useSupabase || !from || !to) return generateFlights({ from, to, depart });
+  const { data, error } = await supabase
+    .from("flights")
+    .select("id, flight_no, depart_time, arrive_time, duration_min, stops, refundable, airline:airlines(code,name,color), fares(base_price)")
+    .eq("from_iata", from)
+    .eq("to_iata", to);
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) return generateFlights({ from, to, depart });
+  return data.map(rowToFlight);
+}
 
 // ── Bookings ────────────────────────────────────────────────────────────────
 function rowToBooking(row) {

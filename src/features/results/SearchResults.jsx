@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { resolveAirport } from "../../data/airports.js";
-import { generateFlights, timeBucket } from "../../lib/mockFlights.js";
+import { timeBucket } from "../../lib/mockFlights.js";
+import { searchFlights } from "../../lib/db.js";
 import { formatINR } from "../../lib/format.js";
 import { useBooking } from "../../context/BookingContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -59,12 +61,16 @@ export default function SearchResults() {
   const travelers = Number(params.get("adults") || 1) + Number(params.get("children") || 0) + Number(params.get("infants") || 0);
   const cabin = params.get("cabin") || "Economy";
 
-  const seedKey = `${from?.code}-${to?.code}-${depart}`;
-  const outbound = useMemo(() => generateFlights({ from: from?.code, to: to?.code, depart }), [seedKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const inbound = useMemo(
-    () => generateFlights({ from: to?.code, to: from?.code, depart: ret || `${depart}-r` }),
-    [seedKey, ret] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  const { data: outbound = [] } = useQuery({
+    queryKey: ["flights", from?.code, to?.code, depart],
+    queryFn: () => searchFlights({ from: from?.code, to: to?.code, depart }),
+    enabled: Boolean(from?.code && to?.code),
+  });
+  const { data: inbound = [] } = useQuery({
+    queryKey: ["flights", to?.code, from?.code, ret || depart, "ret"],
+    queryFn: () => searchFlights({ from: to?.code, to: from?.code, depart: ret || `${depart}-r` }),
+    enabled: tripType === "round" && Boolean(from?.code && to?.code),
+  });
 
   const [priceMax, setPriceMax] = useState(PRICE_MAX);
   const [durationMax, setDurationMax] = useState(DUR_MAX);
