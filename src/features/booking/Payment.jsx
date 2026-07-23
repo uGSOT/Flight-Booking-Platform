@@ -97,7 +97,7 @@ export default function Payment() {
         order,
         amount: total,
         description: `AirMe booking${ref ? " " + ref : ""}`,
-        prefill: { contact: contact.phone, name: draft.passengers?.[0]?.firstName },
+        prefill: { contact: draft.contact?.phone, name: draft.passengers?.[0]?.firstName },
       });
     } catch (err) {
       setProcessing(false);
