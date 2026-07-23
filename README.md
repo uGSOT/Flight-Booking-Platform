@@ -125,6 +125,8 @@ Then visit **`/admin`**. (Demo admin numbers `+919000000001` / `+910000000000` a
 | `npm run build` | Production build |
 | `npm run preview` | Preview the production build |
 | `npm run lint` | Lint with Oxlint |
+| `npm test` | Run the Jest unit tests |
+| `npm run test:coverage` | Run tests with coverage (98% threshold on the logic layer) |
 
 ---
 
