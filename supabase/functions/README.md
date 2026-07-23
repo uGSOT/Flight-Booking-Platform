@@ -5,8 +5,22 @@ Two Deno functions implement the server-side of the payment flow
 
 | Function | Purpose | JWT |
 |----------|---------|-----|
+| `ensure-user` | Creates a pre-confirmed user for a phone (no email sent) so login works | **--no-verify-jwt** |
 | `create-razorpay-order` | Creates a Razorpay order (holds the secret key) | verify (default) |
 | `razorpay-webhook` | Verifies the webhook signature and confirms the booking | **--no-verify-jwt** |
+
+## Auth: ensure-user (fixes "email rate limit exceeded")
+
+The app signs in by a phone→email shim. On Supabase's default mailer, letting
+the client `signUp` triggers a confirmation email and quickly hits
+"email rate limit exceeded". `ensure-user` avoids email entirely: it creates the
+user server-side with `email_confirm: true` (or repairs an existing one), and the
+client then signs in with the deterministic password — no email, no rate limit,
+no "Confirm email" toggle needed.
+
+```bash
+supabase functions deploy ensure-user --no-verify-jwt
+```
 
 ## Flow
 

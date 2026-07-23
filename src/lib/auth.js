@@ -54,22 +54,35 @@ export async function verifyOtp({ phone, dialCode = "+91", code }) {
 
   if (isSupabaseConfigured && supabase) {
     const { email, password } = shimCredentials(identity);
-    // Existing user → sign in; new user → sign up (then sign in if needed).
+
+    // Preferred: ensure a pre-confirmed user exists server-side (no email sent).
+    let ensured = false;
+    try {
+      const { error: fnErr } = await supabase.functions.invoke("ensure-user", { body: { phone: identity } });
+      ensured = !fnErr;
+    } catch {
+      ensured = false; // function not deployed — fall back below
+    }
+
     let { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      if (ensured) {
+        // User was just created/repaired but sign-in failed — surface the real error.
+        throw new Error(error.message);
+      }
+      // Fallback (no ensure-user function): client signup, needs "Confirm email" OFF.
       const signUp = await supabase.auth.signUp({ email, password, options: { data: { phone: identity } } });
       if (signUp.error) throw new Error(signUp.error.message);
       data = signUp.data;
       if (!data.session) {
-        // No session after signup usually means "Confirm email" is enabled.
         const retry = await supabase.auth.signInWithPassword({ email, password });
         if (retry.error || !retry.data.session) {
-          throw new Error("Could not start a session. In Supabase → Authentication → Providers → Email, turn OFF \"Confirm email\", then try again.");
+          throw new Error("Could not start a session. Deploy the ensure-user Edge Function (recommended), or turn OFF \"Confirm email\" in Supabase → Authentication → Email.");
         }
         data = retry.data;
       }
     }
-    // Ensure the profile carries the phone (trigger can't read it from an email signup).
+    // Ensure the profile carries the phone (the signup trigger can't read it).
     const uid = data.user?.id;
     if (uid) await supabase.from("profiles").update({ phone: identity }).eq("id", uid);
     return { user: { id: uid, phone: identity } };
