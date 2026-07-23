@@ -1,0 +1,24 @@
+docs/TEACHING-FLOW.md
+  s_4d1f8bfa536c75::t_724b8c296b9408 1-496
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "b0e106298bb0414f417f369e9456a557913b8c1e",
+  "prompts": {},
+  "humans": {
+    "h_58f26069d268e6": {
+      "author": "mithun-ugsot <mithun.s@upgradsot.com>"
+    }
+  },
+  "sessions": {
+    "s_4d1f8bfa536c75": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8dab5909-7dba-4aa8-83b3-d29a643c9c87",
+        "model": "unknown"
+      },
+      "human_author": "mithun-ugsot <mithun.s@upgradsot.com>"
+    }
+  }
+}
