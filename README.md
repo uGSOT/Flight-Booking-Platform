@@ -159,14 +159,4 @@ Flight-Booking-Platform/
 
 ---
 
-## 🧭 Roadmap / status
-
-- ✅ End-to-end booking flow (search → fare → traveller → add-ons → payment → confirmation)
-- ✅ Dashboard, reports & admin panel
-- ✅ Supabase auth, RLS, DB-backed search; Razorpay test-mode checkout
-- ⏳ Server-verified payments (deploy the Razorpay Edge Functions)
-- ⏳ Real SMS OTP (swap the mock in `src/lib/auth.js`)
-
----
-
 <sub>Built as a capstone project. Design references live in [`mockups/`](mockups/).</sub>
