@@ -2,7 +2,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useAuthModal } from "../context/AuthModalContext.jsx";
 import AccountMenu from "./AccountMenu.jsx";
-import { Ticket, Headset, Instagram, LinkedIn, XSocial } from "./icons.jsx";
+import { Ticket, Instagram, LinkedIn, XSocial } from "./icons.jsx";
 import logo from "../assets/images/logo.png";
 import styles from "./SiteLayout.module.css";
 
@@ -29,9 +29,6 @@ export default function SiteLayout() {
             <NavLink to="/bookings" className={styles.navLink}>
               <Ticket size={18} /> My Bookings
             </NavLink>
-            <a href="#support" className={styles.navLink}>
-              <Headset size={18} /> Support
-            </a>
             {isAuthenticated ? (
               <AccountMenu />
             ) : (

@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { toast } from "../lib/toast.js";
-import { User, Chevron, Ticket, Headset } from "./icons.jsx";
+import { User, Chevron, Ticket } from "./icons.jsx";
 import styles from "./AccountMenu.module.css";
 
 const ITEMS = [
   { label: "My Profile", to: "/profile", icon: User },
   { label: "My Bookings", to: "/bookings", icon: Ticket },
-  { label: "Support", to: "/#support", icon: Headset },
 ];
 
 /** Avatar + dropdown (My Profile, My Bookings, Support, Logout). */

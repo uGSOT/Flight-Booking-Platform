@@ -30,13 +30,20 @@ import lAkasa from "../../assets/images/airline-akasa.png";
 const POPULAR = ["DEL - BOM", "DEL - HYD", "BLR - BOM", "DEL - BLR", "BLR - CCU"];
 
 const ROUTES = [
-  { route: "Delhi - Mumbai", from: 2899, dur: "1h 55m", perDay: 98, img: rDelhiMumbai },
-  { route: "Mumbai - Goa", from: 3299, dur: "1h 25m", perDay: 75, img: rMumbaiGoa },
-  { route: "Bangalore - Delhi", from: 2799, dur: "2h 35m", perDay: 82, img: rBangaloreDelhi },
-  { route: "Hyderabad - Bangalore", from: 3199, dur: "1h 10m", perDay: 65, img: rHyderabadBangalore },
-  { route: "Kolkata - Delhi", from: 3499, dur: "2h 40m", perDay: 60, img: rKolkataDelhi },
-  { route: "Chennai - Mumbai", from: 3599, dur: "2h 40m", perDay: 61, img: rChennaiMumbai },
+  { route: "Delhi - Mumbai", f: "DEL", t: "BOM", from: 2899, dur: "1h 55m", perDay: 98, img: rDelhiMumbai },
+  { route: "Mumbai - Goa", f: "BOM", t: "GOI", from: 3299, dur: "1h 25m", perDay: 75, img: rMumbaiGoa },
+  { route: "Bangalore - Delhi", f: "BLR", t: "DEL", from: 2799, dur: "2h 35m", perDay: 82, img: rBangaloreDelhi },
+  { route: "Hyderabad - Bangalore", f: "HYD", t: "BLR", from: 3199, dur: "1h 10m", perDay: 65, img: rHyderabadBangalore },
+  { route: "Kolkata - Delhi", f: "CCU", t: "DEL", from: 3499, dur: "2h 40m", perDay: 60, img: rKolkataDelhi },
+  { route: "Chennai - Mumbai", f: "MAA", t: "BOM", from: 3599, dur: "2h 40m", perDay: 61, img: rChennaiMumbai },
 ];
+
+// A sensible default departure (7 days out) for one-click route searches.
+function defaultDepart() {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toISOString().slice(0, 10);
+}
 
 const STEPS = [
   { icon: Search, title: "Search", copy: "Find the best flights that suits your plan" },
@@ -80,6 +87,23 @@ export default function LandingPage() {
   }
   function swap() {
     setFields((f) => ({ ...f, from: f.to, to: f.from }));
+  }
+
+  // Native date inputs show "dd/mm/yyyy" when empty; show a real placeholder
+  // by rendering a text field until the user focuses it.
+  const dateProps = (value) => ({
+    type: value ? "date" : "text",
+    placeholder: "Select date",
+    onFocus: (e) => { e.target.type = "date"; e.target.showPicker?.(); },
+    onBlur: (e) => { if (!e.target.value) e.target.type = "text"; },
+  });
+
+  function goRoute(r) {
+    const params = new URLSearchParams({
+      from: r.f, to: r.t, depart: defaultDepart(), ret: "",
+      tripType: "one_way", adults: 1, children: 0, infants: 0, cabin: "Economy",
+    });
+    navigate(`/flights?${params.toString()}`);
   }
 
   function handleSearch(e) {
@@ -154,7 +178,7 @@ export default function LandingPage() {
                 <span>Depart</span>
                 <div className={styles.inputRow}>
                   <Calendar size={18} />
-                  <input type="date" value={fields.depart} onChange={(e) => setField("depart", e.target.value)} />
+                  <input {...dateProps(fields.depart)} value={fields.depart} onChange={(e) => setField("depart", e.target.value)} />
                 </div>
               </label>
 
@@ -163,7 +187,7 @@ export default function LandingPage() {
                 <div className={styles.inputRow}>
                   <Calendar size={18} />
                   <input
-                    type="date"
+                    {...dateProps(fields.ret)}
                     value={fields.ret}
                     onChange={(e) => setField("ret", e.target.value)}
                     disabled={tripType === "one_way"}
@@ -208,7 +232,7 @@ export default function LandingPage() {
         <h2 className={styles.sectionTitle}>Popular Flight Routes</h2>
         <div className={styles.routeGrid}>
           {ROUTES.map((r) => (
-            <button type="button" key={r.route} className={styles.routeCard} onClick={handleSearch}>
+            <button type="button" key={r.route} className={styles.routeCard} onClick={() => goRoute(r)}>
               <div className={styles.routeThumb}>
                 <img src={r.img} alt={r.route} loading="lazy" />
               </div>
