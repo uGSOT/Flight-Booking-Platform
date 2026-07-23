@@ -27,7 +27,7 @@ export default function SiteLayout() {
 
           <nav className={styles.nav}>
             <NavLink to="/bookings" className={styles.navLink}>
-              <Ticket size={18} /> My Bookings
+              <Ticket size={18} /> <span>My Bookings</span>
             </NavLink>
             {isAuthenticated ? (
               <AccountMenu />
