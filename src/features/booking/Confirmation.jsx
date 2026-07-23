@@ -11,7 +11,12 @@ import styles from "./Confirmation.module.css";
 export default function Confirmation() {
   const { ref } = useParams();
   const navigate = useNavigate();
-  const { data: booking, isLoading } = useQuery({ queryKey: ["booking", ref], queryFn: () => getBooking(ref) });
+  const { data: booking, isLoading } = useQuery({
+    queryKey: ["booking", ref],
+    queryFn: () => getBooking(ref),
+    // While a real payment settles, poll until the webhook flips it to confirmed.
+    refetchInterval: (query) => (query.state.data?.status === "pending" ? 3000 : false),
+  });
 
   if (isLoading) return null;
   if (!booking) return <EmptyBooking />;
@@ -24,7 +29,7 @@ export default function Confirmation() {
     <div className={styles.wrap}>
       <div className={styles.hero}>
         <span className={styles.tick}><Check size={34} /></span>
-        <h1>Booking Confirmed!</h1>
+        <h1>{booking.status === "pending" ? "Payment processing…" : "Booking Confirmed!"}</h1>
         <p>Your e-ticket has been booked. A confirmation has been sent to {booking.contact?.phone || "your phone"}.</p>
         <div className={styles.ref}>Booking Reference <strong>{booking.ref}</strong></div>
       </div>
@@ -33,7 +38,7 @@ export default function Confirmation() {
         <div className={styles.flightHead}>
           <span className={styles.logo} style={{ background: flight.airlineColor }}><Plane size={16} /></span>
           <div><strong>{flight.airlineName}</strong> <small>{flight.flightNo}</small></div>
-          <span className={styles.status}>Confirmed</span>
+          <span className={styles.status}>{booking.status === "pending" ? "Pending" : "Confirmed"}</span>
         </div>
 
         <div className={styles.itinerary}>

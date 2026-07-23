@@ -4,6 +4,8 @@
 // verification happen server-side in Supabase Edge Functions — the browser only
 // holds the public key_id. A PAYMENTS_MOCK flag short-circuits for pure-UI demos.
 
+import { supabase } from "./supabase.js";
+
 const CHECKOUT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
 export const PAYMENTS_MOCK = import.meta.env.VITE_PAYMENTS_MOCK === "true";
 
@@ -23,4 +25,39 @@ export function loadRazorpay() {
     document.body.appendChild(script);
   });
   return loaderPromise;
+}
+
+/** Create a Razorpay order via the Edge Function. Returns { orderId, keyId, amount, currency }. */
+export async function createOrder({ amount, bookingRef }) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
+    body: { amount, bookingRef },
+  });
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(typeof data.error === "string" ? data.error : "Could not create order.");
+  return data;
+}
+
+/**
+ * Open the hosted Checkout. Resolves on success handler, rejects on dismiss.
+ * Confirmation is authoritative via the webhook; this is the client-side signal.
+ */
+export async function openCheckout({ order, name = "AirMe", description, prefill }) {
+  const ok = await loadRazorpay();
+  if (!ok) throw new Error("Could not load the payment gateway.");
+  return new Promise((resolve, reject) => {
+    const rzp = new window.Razorpay({
+      key: order.keyId,
+      order_id: order.orderId,
+      amount: order.amount,
+      currency: order.currency,
+      name,
+      description,
+      prefill,
+      theme: { color: "#2b4c7e" },
+      handler: (response) => resolve(response),
+      modal: { ondismiss: () => reject(new Error("Payment cancelled.")) },
+    });
+    rzp.open();
+  });
 }

@@ -4,7 +4,7 @@ import { useBooking } from "../../context/BookingContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { formatINR } from "../../lib/format.js";
 import { saveBooking } from "../../lib/db.js";
-import { PAYMENTS_MOCK } from "../../lib/razorpay.js";
+import { PAYMENTS_MOCK, createOrder, openCheckout } from "../../lib/razorpay.js";
 import { ArrowLeft } from "../../components/icons.jsx";
 import TripSummary from "./TripSummary.jsx";
 import EmptyBooking from "./EmptyBooking.jsx";
@@ -41,34 +41,60 @@ export default function Payment() {
     if (method === "upi" && !upi.includes("@")) { setError("Enter a valid UPI ID."); return; }
 
     setProcessing(true);
-    // Demo: simulate gateway capture. Real flow verifies via Razorpay webhook
-    // server-side before confirming (Architecture §6). PAYMENTS_MOCK short-circuits.
-    const delay = PAYMENTS_MOCK ? 400 : 1600;
+    if (PAYMENTS_MOCK) return payMock();
+    return payRazorpay();
+  }
+
+  function bookingPayload(status) {
+    return {
+      userPhone: user?.phone || "guest",
+      flight: draft.flight,
+      returnFlight: draft.returnFlight,
+      trip: draft.trip,
+      fareTier: draft.fareTier,
+      passengers: draft.passengers,
+      contact: draft.contact,
+      seats: draft.seats,
+      meals: draft.meals,
+      amount: total,
+      promoCode: draft.promoCode,
+      discountAmount: draft.discountAmount,
+      status,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  // Demo path: simulate gateway capture and write a confirmed booking.
+  function payMock() {
     setTimeout(async () => {
       try {
-        const ref = await saveBooking({
-          userPhone: user?.phone || "guest",
-          flight: draft.flight,
-          returnFlight: draft.returnFlight,
-          trip: draft.trip,
-          fareTier: draft.fareTier,
-          passengers: draft.passengers,
-          contact: draft.contact,
-          seats: draft.seats,
-          meals: draft.meals,
-          amount: total,
-          promoCode: draft.promoCode,
-          discountAmount: draft.discountAmount,
-          status: "confirmed",
-          createdAt: new Date().toISOString(),
-        });
+        const ref = await saveBooking(bookingPayload("confirmed"));
         reset();
         navigate(`/booking/confirmation/${ref}`);
       } catch (err) {
         setProcessing(false);
         setError(err.message || "Payment could not be completed. Please try again.");
       }
-    }, delay);
+    }, 400);
+  }
+
+  // Real path: create a pending booking, take payment via Razorpay Checkout, and
+  // let the webhook flip it to confirmed server-side (Architecture §6).
+  async function payRazorpay() {
+    try {
+      const ref = await saveBooking(bookingPayload("pending"));
+      const order = await createOrder({ amount: total, bookingRef: ref });
+      await openCheckout({
+        order,
+        description: `AirMe booking ${ref}`,
+        prefill: { contact: contact.phone, name: draft.passengers?.[0]?.firstName },
+      });
+      reset();
+      navigate(`/booking/confirmation/${ref}`);
+    } catch (err) {
+      setProcessing(false);
+      setError(err.message || "Payment was not completed. Please try again.");
+    }
   }
 
   return (
