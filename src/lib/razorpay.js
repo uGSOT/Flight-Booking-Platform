@@ -40,24 +40,36 @@ export async function createOrder({ amount, bookingRef }) {
 
 /**
  * Open the hosted Checkout. Resolves on success handler, rejects on dismiss.
- * Confirmation is authoritative via the webhook; this is the client-side signal.
+ * - Server-order mode (`order` provided): uses order_id; the webhook is the
+ *   authoritative confirmation.
+ * - Client-only mode (no `order`): launches Checkout with the public test key +
+ *   amount. Suitable for test/demo; there is no server-side verification.
  */
-export async function openCheckout({ order, name = "AirMe", description, prefill }) {
+export async function openCheckout({ order, amount, name = "AirMe", description, prefill }) {
   const ok = await loadRazorpay();
   if (!ok) throw new Error("Could not load the payment gateway.");
+
+  const keyId = order?.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID;
+  if (!keyId) throw new Error("Razorpay key is not configured (VITE_RAZORPAY_KEY_ID).");
+
   return new Promise((resolve, reject) => {
-    const rzp = new window.Razorpay({
-      key: order.keyId,
-      order_id: order.orderId,
-      amount: order.amount,
-      currency: order.currency,
+    const options = {
+      key: keyId,
       name,
       description,
       prefill,
       theme: { color: "#2b4c7e" },
       handler: (response) => resolve(response),
       modal: { ondismiss: () => reject(new Error("Payment cancelled.")) },
-    });
-    rzp.open();
+    };
+    if (order?.orderId) {
+      options.order_id = order.orderId;
+      options.amount = order.amount;
+      options.currency = order.currency;
+    } else {
+      options.amount = Math.round((amount || 0) * 100); // paise
+      options.currency = "INR";
+    }
+    new window.Razorpay(options).open();
   });
 }

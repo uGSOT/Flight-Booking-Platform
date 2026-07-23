@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { formatINR } from "../../lib/format.js";
-import { saveBooking } from "../../lib/db.js";
+import { saveBooking, updateBookingStatus } from "../../lib/db.js";
 import { PAYMENTS_MOCK, createOrder, openCheckout } from "../../lib/razorpay.js";
 import { ArrowLeft } from "../../components/icons.jsx";
 import TripSummary from "./TripSummary.jsx";
@@ -78,22 +78,46 @@ export default function Payment() {
     }, 400);
   }
 
-  // Real path: create a pending booking, take payment via Razorpay Checkout, and
-  // let the webhook flip it to confirmed server-side (Architecture §6).
+  // Real path: launch Razorpay Checkout.
+  //  • If the create-razorpay-order Edge Function is deployed, use the server
+  //    order flow and let the webhook confirm the booking (Architecture §6).
+  //  • Otherwise (test/demo) launch client-only Checkout and confirm on success.
   async function payRazorpay() {
+    let ref = null;
+    let order = null;
     try {
-      const ref = await saveBooking(bookingPayload("pending"));
-      const order = await createOrder({ amount: total, bookingRef: ref });
+      ref = await saveBooking(bookingPayload("pending"));
+      order = await createOrder({ amount: total, bookingRef: ref });
+    } catch {
+      order = null; // Edge Function not deployed → fall back to client-only checkout
+    }
+
+    try {
       await openCheckout({
         order,
-        description: `AirMe booking ${ref}`,
+        amount: total,
+        description: `AirMe booking${ref ? " " + ref : ""}`,
         prefill: { contact: contact.phone, name: draft.passengers?.[0]?.firstName },
       });
+    } catch (err) {
+      setProcessing(false);
+      setError(err.message || "Payment was not completed. Please try again.");
+      return;
+    }
+
+    try {
+      if (order) {
+        // Server flow: webhook confirms; Confirmation page polls until then.
+      } else if (ref) {
+        await updateBookingStatus(ref, "confirmed"); // client-only test flow
+      } else {
+        ref = await saveBooking(bookingPayload("confirmed"));
+      }
       reset();
       navigate(`/booking/confirmation/${ref}`);
     } catch (err) {
       setProcessing(false);
-      setError(err.message || "Payment was not completed. Please try again.");
+      setError(err.message || "Payment captured but the booking could not be saved.");
     }
   }
 
