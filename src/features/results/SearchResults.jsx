@@ -61,7 +61,7 @@ export default function SearchResults() {
   const travelers = Number(params.get("adults") || 1) + Number(params.get("children") || 0) + Number(params.get("infants") || 0);
   const cabin = params.get("cabin") || "Economy";
 
-  const { data: outbound = [] } = useQuery({
+  const { data: outbound = [], isLoading } = useQuery({
     queryKey: ["flights", from?.code, to?.code, depart],
     queryFn: () => searchFlights({ from: from?.code, to: to?.code, depart }),
     enabled: Boolean(from?.code && to?.code),
@@ -279,7 +279,7 @@ export default function SearchResults() {
         {/* RESULTS */}
         <section className={styles.results}>
           <div className={styles.resultsHead}>
-            <span>{outboundResults.length} flight{outboundResults.length !== 1 ? "s" : ""} found</span>
+            <span>{isLoading ? "Searching flights…" : `${outboundResults.length} flight${outboundResults.length !== 1 ? "s" : ""} found`}</span>
             <label className={styles.sort}>
               Sort by
               <select value={sort} onChange={(e) => setSort(e.target.value)}>
@@ -288,7 +288,11 @@ export default function SearchResults() {
             </label>
           </div>
 
-          {tripType === "round" ? (
+          {isLoading ? (
+            <div className={styles.skeletons}>
+              {[0, 1, 2, 3].map((i) => <div key={i} className={styles.skeleton} />)}
+            </div>
+          ) : tripType === "round" ? (
             <div className={styles.twoCol}>
               <div>
                 <h3 className={styles.legHead}>Onward · {from?.code} → {to?.code}</h3>

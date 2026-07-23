@@ -7,7 +7,10 @@ import { AIRPORTS } from "../../data/airports.js";
 import { minutesToTime } from "../../lib/mockFlights.js";
 import { formatINR, formatDate, formatDayDate, formatDuration } from "../../lib/format.js";
 import Modal from "../../components/Modal.jsx";
+import ConfirmDialog from "../../components/ConfirmDialog.jsx";
+import { useConfirm } from "../../components/useConfirm.js";
 import StatusBadge from "../../components/StatusBadge.jsx";
+import { toast } from "../../lib/toast.js";
 import { Plane, Ticket } from "../../components/icons.jsx";
 import styles from "./MyBookings.module.css";
 
@@ -17,10 +20,11 @@ export default function MyBookings() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: all = [] } = useQuery({ queryKey: ["bookings", user?.phone], queryFn: () => listBookings(user?.phone) });
+  const { data: all = [], isLoading } = useQuery({ queryKey: ["bookings", user?.phone], queryFn: () => listBookings(user?.phone) });
   const [status, setStatus] = useState("all");
   const [q, setQ] = useState("");
   const [openRef, setOpenRef] = useState(null);
+  const { confirmState, busy, confirm, close, run } = useConfirm();
 
   const rows = all.filter((b) => {
     if (status !== "all" && b.status !== status) return false;
@@ -33,17 +37,34 @@ export default function MyBookings() {
 
   const active = openRef ? all.find((b) => b.ref === openRef) : null;
 
-  async function cancel(ref) {
-    await updateBookingStatus(ref, "cancelled");
-    queryClient.invalidateQueries({ queryKey: ["bookings"] });
-    setOpenRef(null);
+  function cancel(ref) {
+    confirm({
+      title: "Cancel this booking?",
+      message: `Booking ${ref} will be cancelled. This can't be undone.`,
+      confirmLabel: "Cancel booking",
+      cancelLabel: "Keep booking",
+      danger: true,
+      action: async () => {
+        try {
+          await updateBookingStatus(ref, "cancelled");
+          await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+          setOpenRef(null);
+          toast.success(`Booking ${ref} cancelled.`);
+        } catch (err) {
+          toast.error(err.message || "Could not cancel the booking.");
+          throw err;
+        }
+      },
+    });
   }
 
   return (
     <div className="container" style={{ paddingBlock: "var(--space-8)" }}>
       <h1 className={styles.title}>My Bookings</h1>
 
-      {all.length === 0 ? (
+      {isLoading ? (
+        <div className={styles.loading}>Loading your bookings…</div>
+      ) : all.length === 0 ? (
         <div className={styles.empty}>
           <span className={styles.emptyIcon}><Ticket size={28} /></span>
           <strong>No bookings yet</strong>
@@ -90,6 +111,18 @@ export default function MyBookings() {
       <Modal open={Boolean(active)} onClose={() => setOpenRef(null)} size="md">
         {active && <BookingDetail booking={active} onCancel={cancel} onClose={() => setOpenRef(null)} />}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(confirmState)}
+        title={confirmState?.title}
+        message={confirmState?.message}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        danger={confirmState?.danger}
+        busy={busy}
+        onConfirm={run}
+        onClose={close}
+      />
     </div>
   );
 }

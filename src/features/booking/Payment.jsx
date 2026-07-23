@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuthModal } from "../../context/AuthModalContext.jsx";
 import { formatINR } from "../../lib/format.js";
 import { saveBooking, updateBookingStatus } from "../../lib/db.js";
 import { PAYMENTS_MOCK, createOrder, openCheckout } from "../../lib/razorpay.js";
+import { toast } from "../../lib/toast.js";
 import { ArrowLeft } from "../../components/icons.jsx";
 import TripSummary from "./TripSummary.jsx";
 import EmptyBooking from "./EmptyBooking.jsx";
@@ -12,7 +14,8 @@ import styles from "./Payment.module.css";
 
 export default function Payment() {
   const { draft, total, reset } = useBooking();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { openLogin } = useAuthModal();
   const navigate = useNavigate();
   const { flight, trip } = draft;
 
@@ -34,6 +37,11 @@ export default function Payment() {
 
   function pay() {
     setError("");
+    if (!isAuthenticated) {
+      toast.info("Please log in to complete your booking.");
+      openLogin();
+      return;
+    }
     if (!agree) { setError("Please accept the terms to continue."); return; }
     if (method === "card" && (card.number.replace(/\s/g, "").length < 12 || !card.cvv || !card.name)) {
       setError("Enter valid card details."); return;
@@ -69,11 +77,14 @@ export default function Payment() {
     setTimeout(async () => {
       try {
         const ref = await saveBooking(bookingPayload("confirmed"));
+        toast.success("Payment successful — your booking is confirmed!");
         reset();
         navigate(`/booking/confirmation/${ref}`);
       } catch (err) {
         setProcessing(false);
-        setError(err.message || "Payment could not be completed. Please try again.");
+        const msg = err.message || "Payment could not be completed. Please try again.";
+        setError(msg);
+        toast.error(msg);
       }
     }, 400);
   }
@@ -101,7 +112,9 @@ export default function Payment() {
       });
     } catch (err) {
       setProcessing(false);
-      setError(err.message || "Payment was not completed. Please try again.");
+      const msg = err.message || "Payment was not completed. Please try again.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -113,11 +126,14 @@ export default function Payment() {
       } else {
         ref = await saveBooking(bookingPayload("confirmed"));
       }
+      toast.success("Payment successful — your booking is confirmed!");
       reset();
       navigate(`/booking/confirmation/${ref}`);
     } catch (err) {
       setProcessing(false);
-      setError(err.message || "Payment captured but the booking could not be saved.");
+      const msg = err.message || "Payment captured but the booking could not be saved.";
+      setError(msg);
+      toast.error(msg);
     }
   }
 

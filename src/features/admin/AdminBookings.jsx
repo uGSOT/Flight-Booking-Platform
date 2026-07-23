@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listBookings, updateBookingStatus } from "../../lib/db.js";
 import { formatINR, formatDate } from "../../lib/format.js";
 import StatusBadge from "../../components/StatusBadge.jsx";
+import { toast } from "../../lib/toast.js";
 import styles from "./Admin.module.css";
 
 const STATUSES = ["all", "confirmed", "pending", "cancelled"];
@@ -23,8 +24,13 @@ export default function AdminBookings() {
   });
 
   async function change(ref, next) {
-    await updateBookingStatus(ref, next);
-    queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    try {
+      await updateBookingStatus(ref, next);
+      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      toast.success(`Booking ${ref} marked ${next}.`);
+    } catch (err) {
+      toast.error(err.message || "Could not update the booking status.");
+    }
   }
 
   return (

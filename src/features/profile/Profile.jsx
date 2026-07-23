@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { getMyProfile, saveMyProfile } from "../../lib/db.js";
+import { toast } from "../../lib/toast.js";
 import { User, Calendar, Mail, Phone, Chevron } from "../../components/icons.jsx";
 import profileImg from "../../assets/images/auth-side.png";
 import styles from "./Profile.module.css";
@@ -11,6 +12,7 @@ export default function Profile() {
   const { user } = useAuth();
   const [form, setForm] = useState({ ...empty, phone: user?.phone || "" });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -31,11 +33,20 @@ export default function Profile() {
     setError("");
     if (!form.gender) { setError("Please select a gender."); return; }
     if (!form.phone.trim()) { setError("Phone number is required."); return; }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError("Please enter a valid email address."); return;
+    }
+    setSaving(true);
     try {
       await saveMyProfile(form);
       setSaved(true);
+      toast.success("Profile saved.");
     } catch (err) {
-      setError(err.message || "Could not save profile.");
+      const msg = err.message || "Could not save profile.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -73,8 +84,10 @@ export default function Profile() {
 
           {error && <p className={styles.error}>{error}</p>}
           <div className={styles.actions}>
-            <button type="button" className={styles.save} onClick={save}>Save changes</button>
-            {saved && <span className={styles.savedMsg}>✓ Profile saved</span>}
+            <button type="button" className={styles.save} onClick={save} disabled={saving}>
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+            {saved && !saving && <span className={styles.savedMsg}>✓ Profile saved</span>}
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Modal from "../../components/Modal.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { requestOtp, verifyOtp } from "../../lib/auth.js";
+import { toast } from "../../lib/toast.js";
 import { ArrowLeft } from "../../components/icons.jsx";
 import authSide from "../../assets/images/auth-side.png";
 import styles from "./AuthModal.module.css";
@@ -70,11 +71,13 @@ export default function AuthModal({ open, onClose, onSuccess }) {
       const { user } = await verifyOtp({ dialCode: "+91", phone, code });
       setUser(user);
       setBusy(false);
+      toast.success("You're logged in.");
       onSuccess?.();
       onClose?.();
     } catch (err) {
       setBusy(false);
       setError(err.message);
+      toast.error(err.message || "Could not verify the OTP.");
     }
   }
 
